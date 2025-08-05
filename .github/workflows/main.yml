@@ -1,14 +1,11 @@
 name: Sync IPTV Playlists
 
-# 触发条件：定时 + 手动
 on:
-  # 每 30 分钟执行一次（GitHub 使用 UTC 时间）
+  push:
   schedule:
-    - cron: '*/30 * * * *'
-  # 允许在 Actions → Workflows → Run workflow 按钮手动触发
+    - cron: '15 16,18,20,22,0,2,4,6,8,10,12,14 * * *'
   workflow_dispatch:
 
-# 赋予写入权限，好让工作流可以推送代码
 permissions:
   contents: write
 
@@ -16,23 +13,47 @@ jobs:
   update:
     runs-on: ubuntu-latest
     steps:
-      # 1) 拉取当前仓库内容
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      # 2) 下载四个最新的 .m3u 文件并覆盖到仓库根目录
-      - name: Download latest playlists
-        run: |
-          set -e
-          curl -fsSL --retry 3 -o iptv.m3u      https://mgtv.ottiptv.cc/iptv.m3u
-          curl -fsSL --retry 3 -o yylunbo.m3u   https://mgtv.ottiptv.cc/yylunbo.m3u
-          curl -fsSL --retry 3 -o huyayqk.m3u   https://mgtv.ottiptv.cc/huyayqk.m3u
-          curl -fsSL --retry 3 -o douyuyqk.m3u  https://mgtv.ottiptv.cc/douyuyqk.m3u
-
-      # 3) 若文件内容有变化则提交并推送
-      - name: Commit & push if changed
-        uses: EndBug/add-and-commit@v9
-        with:
-          add: '*.m3u'
-          message: 'chore: auto-update IPTV playlists'
-          default_author: github_actions
+    - uses: actions/checkout@v4
+    
+    - name: Download and Update IPTV Playlists
+      run: |
+        echo "🎵 开始下载 IPTV 播放列表..."
+        
+        # 下载所有播放列表文件
+        wget https://mgtv.ottiptv.cc/iptv.m3u -O iptv.m3u || echo "❌ iptv.m3u 下载失败"
+        wget https://mgtv.ottiptv.cc/yylunbo.m3u -O yylunbo.m3u || echo "❌ yylunbo.m3u 下载失败"
+        wget https://mgtv.ottiptv.cc/huyayqk.m3u -O huyayqk.m3u || echo "❌ huyayqk.m3u 下载失败"
+        wget https://mgtv.ottiptv.cc/douyuyqk.m3u -O douyuyqk.m3u || echo "❌ douyuyqk.m3u 下载失败"
+        
+        # 检查下载结果
+        echo "📊 文件下载状态："
+        for file in iptv.m3u yylunbo.m3u huyayqk.m3u douyuyqk.m3u; do
+          if [ -f "$file" ] && [ -s "$file" ]; then
+            size=$(wc -c < "$file")
+            echo "✅ $file: ${size} 字节"
+          else
+            echo "❌ $file: 下载失败或为空"
+          fi
+        done
+        
+        # 配置 Git
+        git config --local user.name "github-actions[bot]"
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        
+        # 检查是否有变更
+        if git diff --quiet *.m3u 2>/dev/null; then
+          echo "ℹ️ 没有检测到文件变更，跳过提交"
+          exit 0
+        fi
+        
+        # 添加并提交文件
+        git add *.m3u
+        git commit -m "chore: auto-update IPTV playlists - $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+        echo "✅ 文件已提交"
+        
+    - name: Push changes
+      run: |
+        git push origin ${{ github.ref_name }}
+        echo "🚀 更新已推送到仓库"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
