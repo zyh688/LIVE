@@ -20,10 +20,10 @@ jobs:
         echo "🎵 开始下载 IPTV 播放列表..."
         
         # 下载所有播放列表文件
-        wget https://mgtv.ottiptv.cc/iptv.m3u -O iptv.m3u || echo "❌ iptv.m3u 下载失败"
-        wget https://mgtv.ottiptv.cc/yylunbo.m3u -O yylunbo.m3u || echo "❌ yylunbo.m3u 下载失败"
-        wget https://mgtv.ottiptv.cc/huyayqk.m3u -O huyayqk.m3u || echo "❌ huyayqk.m3u 下载失败"
-        wget https://mgtv.ottiptv.cc/douyuyqk.m3u -O douyuyqk.m3u || echo "❌ douyuyqk.m3u 下载失败"
+        wget https://mursor.ottiptv.cc/iptv.m3u -O iptv.m3u || echo "❌ iptv.m3u 下载失败"
+        wget https://mursor.ottiptv.cc/yylunbo.m3u -O yylunbo.m3u || echo "❌ yylunbo.m3u 下载失败"
+        wget https://mursor.ottiptv.cc/huyayqk.m3u -O huyayqk.m3u || echo "❌ huyayqk.m3u 下载失败"
+        wget https://mursor.ottiptv.cc/douyuyqk.m3u -O douyuyqk.m3u || echo "❌ douyuyqk.m3u 下载失败"
         
         # 检查下载结果
         echo "📊 文件下载状态："
