@@ -24,10 +24,10 @@ jobs:
       - name: Download latest playlists
         run: |
           set -e
-          curl -fsSL --retry 3 -o iptv.m3u      https://mursor.ottiptv.cc/iptv.m3u
-          curl -fsSL --retry 3 -o yylunbo.m3u   https://mursor.ottiptv.cc/yylunbo.m3u
-          curl -fsSL --retry 3 -o huyayqk.m3u   https://mursor.ottiptv.cc/huyayqk.m3u
-          curl -fsSL --retry 3 -o douyuyqk.m3u  https://mursor.ottiptv.cc/douyuyqk.m3u
+          curl -fsSL --retry 3 -o iptv.m3u      https://mgtv.ottiptv.cc/iptv.m3u
+          curl -fsSL --retry 3 -o yylunbo.m3u   https://mgtv.ottiptv.cc/yylunbo.m3u
+          curl -fsSL --retry 3 -o huyayqk.m3u   https://mgtv.ottiptv.cc/huyayqk.m3u
+          curl -fsSL --retry 3 -o douyuyqk.m3u  https://mgtv.ottiptv.cc/douyuyqk.m3u
 
       # 3) 若文件内容有变化则提交并推送
       - name: Commit & push if changed
