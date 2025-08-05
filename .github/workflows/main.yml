@@ -1,0 +1,38 @@
+name: Sync IPTV Playlists
+
+# 触发条件：定时 + 手动
+on:
+  # 每 30 分钟执行一次（GitHub 使用 UTC 时间）
+  schedule:
+    - cron: '*/30 * * * *'
+  # 允许在 Actions → Workflows → Run workflow 按钮手动触发
+  workflow_dispatch:
+
+# 赋予写入权限，好让工作流可以推送代码
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      # 1) 拉取当前仓库内容
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2) 下载四个最新的 .m3u 文件并覆盖到仓库根目录
+      - name: Download latest playlists
+        run: |
+          set -e
+          curl -fsSL --retry 3 -o iptv.m3u      https://mursor.ottiptv.cc/iptv.m3u
+          curl -fsSL --retry 3 -o yylunbo.m3u   https://mursor.ottiptv.cc/yylunbo.m3u
+          curl -fsSL --retry 3 -o huyayqk.m3u   https://mursor.ottiptv.cc/huyayqk.m3u
+          curl -fsSL --retry 3 -o douyuyqk.m3u  https://mursor.ottiptv.cc/douyuyqk.m3u
+
+      # 3) 若文件内容有变化则提交并推送
+      - name: Commit & push if changed
+        uses: EndBug/add-and-commit@v9
+        with:
+          add: '*.m3u'
+          message: 'chore: auto-update IPTV playlists'
+          default_author: github_actions
