@@ -11,18 +11,21 @@ permissions:
 jobs:
   update:
     runs-on: ubuntu-latest
+    env:
+      TOKEN: ${{ secrets.M3U_TOKEN }}
     steps:
     - uses: actions/checkout@v4
     
     - name: Download and Update IPTV Playlists
       run: |
         echo "🎵 开始下载 IPTV 播放列表..."
-        
+
+        base="https://mursor.ottiptv.cc"
         # 下载所有播放列表文件
-        wget https://mursor.ottiptv.cc/iptv.m3u -O iptv.m3u || echo "❌ iptv.m3u 下载失败"
-        wget https://mursor.ottiptv.cc/yylunbo.m3u -O yylunbo.m3u || echo "❌ yylunbo.m3u 下载失败"
-        wget https://mursor.ottiptv.cc/huyayqk.m3u -O huyayqk.m3u || echo "❌ huyayqk.m3u 下载失败"
-        wget https://mursor.ottiptv.cc/douyuyqk.m3u -O douyuyqk.m3u || echo "❌ douyuyqk.m3u 下载失败"
+        wget "${base}/iptv.m3u?token=${TOKEN}"     -O iptv.m3u     || echo "❌ iptv.m3u 下载失败"
+        wget "${base}/yylunbo.m3u?token=${TOKEN}"  -O yylunbo.m3u  || echo "❌ yylunbo.m3u 下载失败"
+        wget "${base}/huyayqk.m3u?token=${TOKEN}"  -O huyayqk.m3u  || echo "❌ huyayqk.m3u 下载失败"
+        wget "${base}/douyuyqk.m3u?token=${TOKEN}" -O douyuyqk.m3u || echo "❌ douyuyqk.m3u 下载失败"
         
         # 检查下载结果
         echo "📊 文件下载状态："
