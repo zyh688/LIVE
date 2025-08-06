@@ -22,7 +22,7 @@ jobs:
           echo "🎵 开始下载 IPTV 播放列表..."
 
           base="https://mursor.ottiptv.cc"
-          files=("iptv.m3u" "yylunbo.m3u" "huyayqk.m3u" "douyuyqk.m3u")
+          files=("iptv.m3u" "yylunbo.m3u" "huyayqk.m3u" "douyuyqk.m3u" "bililive.m3u")
 
           download_with_retry () {
             local url="$1"
