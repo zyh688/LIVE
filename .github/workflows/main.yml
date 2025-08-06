@@ -2,7 +2,7 @@ name: Sync IPTV Playlists
 
 on:
   schedule:
-    - cron: '0 */2 * * *' 
+    - cron: '0 */2 * * *'   # 每 2 小时触发（UTC）
   workflow_dispatch:
 
 permissions:
@@ -14,48 +14,71 @@ jobs:
     env:
       TOKEN: ${{ secrets.M3U_TOKEN }}
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Download and Update IPTV Playlists
-      run: |
-        echo "🎵 开始下载 IPTV 播放列表..."
+      - uses: actions/checkout@v4
 
-        base="https://mursor.ottiptv.cc"
-        # 下载所有播放列表文件
-        wget "${base}/iptv.m3u?token=${TOKEN}"     -O iptv.m3u     || echo "❌ iptv.m3u 下载失败"
-        wget "${base}/yylunbo.m3u?token=${TOKEN}"  -O yylunbo.m3u  || echo "❌ yylunbo.m3u 下载失败"
-        wget "${base}/huyayqk.m3u?token=${TOKEN}"  -O huyayqk.m3u  || echo "❌ huyayqk.m3u 下载失败"
-        wget "${base}/douyuyqk.m3u?token=${TOKEN}" -O douyuyqk.m3u || echo "❌ douyuyqk.m3u 下载失败"
-        
-        # 检查下载结果
-        echo "📊 文件下载状态："
-        for file in iptv.m3u yylunbo.m3u huyayqk.m3u douyuyqk.m3u; do
-          if [ -f "$file" ] && [ -s "$file" ]; then
-            size=$(wc -c < "$file")
-            echo "✅ $file: ${size} 字节"
-          else
-            echo "❌ $file: 下载失败或为空"
+      - name: Download and Update IPTV Playlists
+        run: |
+          set -e
+          echo "🎵 开始下载 IPTV 播放列表..."
+
+          base="https://mursor.ottiptv.cc"
+          files=("iptv.m3u" "yylunbo.m3u" "huyayqk.m3u" "douyuyqk.m3u")
+
+          download_with_retry () {
+            local url="$1"
+            local outfile="$2"
+            local attempt=1
+            local max=5
+            local ok=0
+
+            while [ $attempt -le $max ]; do
+              echo "➡️  [$attempt/$max] 下载 $outfile ..."
+              if wget -q --timeout=15 --connect-timeout=10 "$url" -O "$outfile"; then
+                echo "✅ $outfile 下载成功"
+                ok=1
+                break
+              else
+                echo "⚠️  $outfile 下载失败，等待 $attempt 秒后重试..."
+                sleep $attempt
+                attempt=$(( attempt + 1 ))
+              fi
+            done
+
+            if [ $ok -eq 0 ]; then
+              echo "❌ $outfile 最终下载失败"
+              # 清理空文件，避免误判为变更
+              rm -f "$outfile"
+            fi
+          }
+
+          for f in "${files[@]}"; do
+            download_with_retry "${base}/${f}?token=${TOKEN}" "$f"
+          done
+
+          echo "📊 文件下载状态："
+          for f in "${files[@]}"; do
+            if [ -s "$f" ]; then
+              echo "✅ $f - $(wc -c < "$f") 字节"
+            else
+              echo "❌ $f - 未成功下载"
+            fi
+          done
+
+          git config --local user.name  "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet -- *.m3u; then
+            echo "ℹ️ 没有检测到文件变更，跳过提交"
+            exit 0
           fi
-        done
-        
-        # 配置 Git
-        git config --local user.name "github-actions[bot]"
-        git config --local user.email "github-actions[bot]@users.noreply.github.com"
-        
-        # 检查是否有变更
-        if git diff --quiet *.m3u 2>/dev/null; then
-          echo "ℹ️ 没有检测到文件变更，跳过提交"
-          exit 0
-        fi
-        
-        # 添加并提交文件
-        git add *.m3u
-        git commit -m "chore: auto-update IPTV playlists - $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
-        echo "✅ 文件已提交"
-        
-    - name: Push changes
-      run: |
-        git push origin ${{ github.ref_name }}
-        echo "🚀 更新已推送到仓库"
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+          git add *.m3u
+          git commit -m "chore: auto-update IPTV playlists - $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo "✅ 文件已提交"
+
+      - name: Push changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git push origin ${{ github.ref_name }}
+          echo "🚀 更新已推送到仓库"
